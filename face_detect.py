@@ -7,16 +7,14 @@ import tensorflow_datasets as tfds
 import os
 import pathlib
 import matplotlib.pyplot as plt
-
 from tensorflow.keras.metrics import SparseCategoricalAccuracy
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-batch_size = 20
+batch_size = 32
 img_height = 224
 img_width = 224
 
-#se
-
-#split the data to 80/20
+#load the data in and split the data to 80/20
 
 train_ds = tf.keras.utils.image_dataset_from_directory(
   'faces',
@@ -34,42 +32,44 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
   image_size=(img_height, img_width),
   batch_size=batch_size)
 
+#normalize the train_ds and val_ds by 255
+normalization_layer = tf.keras.layers.experimental.preprocessing.Rescaling(1./255)
+
+#apply the normalization layer to the train_ds and val_ds
+normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(normalized_ds))
+
+#apply the normalization to the val_ds
+normalized_val_ds = val_ds.map(lambda x, y: (normalization_layer(x), y))
+image_batch, labels_batch = next(iter(normalized_val_ds))
+
+#determine the number of classes
 class_names = train_ds.class_names
 print(class_names)
 
 
-normalization_layer = tf.keras.layers.Rescaling(1./255)
+num_classes = 4
 
-normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-image_batch, labels_batch = next(iter(normalized_ds))
-first_image = image_batch[0]
-
-#pixel values are now in `[0,1]`.
-print(np.min(first_image), np.max(first_image))
-
-
-
-AUTOTUNE = tf.data.AUTOTUNE
-
-train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-
-
-num_classes = 5
+#create a sequential model
 
 model = tf.keras.Sequential([
-  tf.keras.layers.Conv2D(32, 3, activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(32, 3, activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Conv2D(32, 3, activation='relu'),
-  tf.keras.layers.MaxPooling2D(),
-  tf.keras.layers.Flatten(),
-  tf.keras.layers.Dense(128, activation='relu'),
-  tf.keras.layers.Dense(num_classes)
+    tf.keras.layers.Conv2D(16, (3,3), activation='relu', input_shape=(224,224,3)),
+    tf.keras.layers.MaxPool2D((2,2)),
+    tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
+    tf.keras.layers.MaxPool2D((2,2)),
+    tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+    tf.keras.layers.MaxPool2D((2,2)),
+    tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+    tf.keras.layers.MaxPool2D((2,2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(512, activation='relu'),
+    tf.keras.layers.Dense(num_classes)
 ])
 
+
+
+
+epochs=5
 
 
 model.compile(
@@ -78,12 +78,12 @@ model.compile(
   metrics=['accuracy'])
 
 history = model.fit(
-  train_ds,
-  validation_data=val_ds,
-  epochs=2
+  normalized_ds,
+  validation_data=normalized_val_ds,
+  epochs=epochs
 )
 
-epochs=2
+
 
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']

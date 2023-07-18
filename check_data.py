@@ -32,8 +32,10 @@ test=pd.read_csv('kempton_test.csv',names=column_names)
 test=test.fillna(0)
 test=test.astype(int)
 
-print(train)
-print(test)
+
+
+print("data in the pandas dataframe", train.head())
+print(test.head())
 
 
 #putting the data into numpy arrays
@@ -45,14 +47,32 @@ test_x=test.iloc[:,0:9].values
 train_y=train.iloc[:,9].values
 test_y=test.iloc[:,9].values
 
+#print the train_y and test_y before the change
+print("this is the test data", test_y)
+print("this is the train data", train_y)
+
+#only want the winners for the y value so anything over 1.1 is a 0 and anything under is a 1
+
 test_y=np.where(test_y>1.1,0,1)
 train_y=np.where(train_y>1.1,0,1)
 
 train_x=np.array(train_x)
 test_x=np.array(test_x)
 
-print(train_x)
-print(train_y)
+#print test y and train y
+print("this is the y data, then into numpy array", test_y)
+print("this is the y data", train_y)
+
+#print train_x  and test_x
+print("this is the x data", test_x)
+print("this is the x data", train_x)
+
+
+#print(train_x)
+#print(train_y)
 
 
 n_features=train_x.shape[1]
+
+#print n_features
+print("this is the number of features", n_features)
