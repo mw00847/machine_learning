@@ -1,46 +1,33 @@
 
+#Importing libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from numpy import argmax
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, LeakyReLU
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-from tensorflow.keras.optimizers import Adam
-
-
-# Configure GPU
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+from tensorflow.keras.layers import Dense
+import seaborn as sns
 
 #pd read csv kempton_edited.csv and use the first row as the column names
 data=pd.read_csv('kempton_edited.csv', header=0)
-
-#sorting the data
 
 #fill 0's in the na data
 data=data.fillna(0)
 #are there na values in data
 print("are there na values in data: ", data.isna().values.any())
 
-#set pandas to print all columns
-pd.set_option('display.max_columns', None)
 
-#convert all values in data ['rpr'] and ['or'] that are not numbers or could be - to 0
-data['rpr']=pd.to_numeric(data['rpr'], errors='coerce')
+
+
+#convert object into integer data ['or'] and ['rpr']
 data['or']=pd.to_numeric(data['or'], errors='coerce')
-
-
-print("this is the data head after organising the data", data.head())
-
-
-
-#check from here
+data['rpr']=pd.to_numeric(data['rpr'], errors='coerce')
 
 #one hot encoding for the features ['class'], ['age_band'],  ['going'], ['horse'] , ['sex'] , ['jockey'] , ['trainer']
 #using sklearn
@@ -61,8 +48,19 @@ print("after one hot encoding the data looks like this: ")
 print(data.head())
 
 
+#normalizing the data
+#data['or']=data['or']/data['or'].max()
+#data['rpr']=data['rpr']/data['rpr'].max()
+#data['class']=data['class']/data['class'].max()
+#data['age_band']=data['age_band']/data['age_band'].max()
+#data['going']=data['going']/data['going'].max()
+#data['horse']=data['horse']/data['horse'].max()
+#data['trainer']=data['trainer']/data['trainer'].max()
+#data['jockey']=data['jockey']/data['jockey'].max()
+#data['owner']=data['owner']/data['owner'].max()
 
-print("this is the data describe", data.describe())
+
+
 
 #the pos column is the label so we need to remove it from the data
 features=data.drop(['pos'], axis=1)
@@ -85,22 +83,9 @@ label=data['pos']
 
 label_array=data['pos'].values
 #only want the winners for the y value so anything over 1.1 is a 0 and anything under is a 1
-
 label_array=np.where(label_array>1.1,0,1)
 print("this is the label array")
 print(label_array)
-
-
-#change -values to 0 in the rpr column of the data array
-data['rpr']=np.where(data['rpr']<0,0,data['rpr'])
-
-#
-
-#describe the data
-print("this is the data description: ")
-print(data.describe())
-
-
 
 #describe the number of features
 n_features=features.shape[1]
@@ -108,15 +93,21 @@ n_features=features.shape[1]
 features=features.values
 
 
-#split the data into train test and validation
+#split the data into train and test
+train_features, test_features = train_test_split(features, test_size=0.5)
 
-from sklearn.model_selection import train_test_split
+#split the label into train and test
+train_label, test_label= train_test_split(label_array, test_size=0.5)
 
-# Split the data into train and test sets for features
-train_features, test_features, train_label_array, test_label_array = train_test_split(features, label_array, test_size=0.4, random_state=42)
 
-# Further split the train set into train and validation sets
-train_features, valid_features, train_label_array, valid_label_array = train_test_split(train_features, train_label_array, test_size=0.5, random_state=42)
+
+
+
+
+#create a sns pairplot of the features
+#sns.pairplot(train_features[['class','age_band','dist_m','going','ran','lbs','jockey','trainer','or','rpr']],diag_kind="kde")
+#plt.show()
+#putting the data into numpy arrays
 
 
 
@@ -125,41 +116,42 @@ train_features, valid_features, train_label_array, valid_label_array = train_tes
 
 # define model
 model = Sequential()
-model.add(Dense(10000, activation='relu', kernel_initializer='he_normal', input_shape=(n_features,)))
-model.add(Dense(5000, activation='relu', kernel_initializer='he_normal'))
-model.add(Dense(2500, activation='relu', kernel_initializer='he_normal'))
-model.add(Dense(1250, activation='relu', kernel_initializer='he_normal'))
+model.add(Dense(1000, activation='relu', kernel_initializer='he_normal', input_shape=(n_features,)))
+model.add(Dense(500, activation='relu', kernel_initializer='he_normal'))
+model.add(Dense(250, activation='relu', kernel_initializer='he_normal'))
+model.add(Dense(125, activation='relu', kernel_initializer='he_normal'))
+
+
+model.add(Dense(9, activation='softmax'))
 model.add(Dense(1, activation='sigmoid'))
 
 
-# Define optimizer with a custom learning rate
-custom_learning_rate = 0.001 # Change this value as desired
-optimizer = Adam(learning_rate=custom_learning_rate)
+# compile the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-# Compile the model with the custom optimizer
-model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+# fit the model
+model.fit(train_features, train_label, epochs=5)
 
-# ... (previous code for data preprocessing and model building)
-
-# Train the model
-history = model.fit(train_features, train_label_array, epochs=10, validation_data=(valid_features, valid_label_array))
+# evaluate the model
+loss, acc = model.evaluate(test_features, test_label)
+print('Test Accuracy: %.3f' % acc)
 
 
-# Plot training loss and validation loss over epochs
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-plt.legend()
-plt.title('Training and Validation Loss')
-plt.show()
+# make a prediction
 
-# Plot training accuracy and validation accuracy over epochs
-plt.plot(history.history['accuracy'], label='Training Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.title('Training and Validation Accuracy')
-plt.show()
+#twothirty=([[2,7,1,0 ,0 ,8,165,170,181 ],
+#[2,7,2,0,0,7,165,161,172],
+#[2,7,3,0,0,8,165,149,165],
+#[2,7,4,0,0,8,165,165,174],
+#[2,7,5,0,0,8,165,149,159],
+#[2,7,6,0,0,9,157,147,167],
+#[2,7,7,0,0,8,157,153,168]])
 
+#what = model.predict([twothirty])
+#print("this is the prediction:  ", what[0])
+
+
+#Plots model training history
+
+# make numpy printouts easier to read.
+np.set_printoptions(precision=3, suppress=True)

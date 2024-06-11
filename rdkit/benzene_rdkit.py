@@ -1,6 +1,3 @@
-#predicting properties of molecules with rdkit
-
-
 import numpy as np
 import tensorflow as tf
 from rdkit import Chem

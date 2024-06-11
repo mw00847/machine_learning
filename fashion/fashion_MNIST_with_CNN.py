@@ -1,21 +1,18 @@
 #taken from AI and Machine Learning for Coders
-
 import tensorflow as tf
 
-data=tf.keras.datasets.fashion_mnist
-
 #load the data into train and test data
+data=tf.keras.datasets.fashion_mnist
 (training_images, training_labels), (test_images, test_labels) = data.load_data()
 
 #print the dimensions of training_images
 print("dimensions before reshaping and normalising", training_images.ndim)
 
-
-#reshape the images to 28x28
+#reshape the images_for_classification to 28x28
 training_images=training_images.reshape(60000, 28, 28, 1)
 testing_images=test_images.reshape(10000, 28, 28, 1)
 
-#normalize the images
+#normalize the images_for_classification
 training_images=training_images / 255.0
 testing_images=testing_images / 255.0
 

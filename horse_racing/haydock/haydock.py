@@ -1,5 +1,5 @@
 #predicting the results from racing at haydock
-#data is from taken from https://github.com/joenano/rpscrape
+#data scraped using https://github.com/joenano/rpscrape
 
 #Importing libraries
 
@@ -19,19 +19,19 @@ from tensorflow.keras.layers import Dense
 import seaborn as sns
 
 #pd read csv hayock_edited.csv and use the first row as the column names
-data=pd.read_csv('haydock_edited.csv', header=0)
+data=pd.read_csv('horse_racing/haydock/haydock_edited.csv', header=0)
 
 
 # make numpy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
 
-#look at the terms used in the data
-#for col in data.columns:
-#    print("these are the variables:   ", col)
 
-
-#fill 0's in the na data
+#clear the nan values in the data
 data=data.fillna(0)
+
+#print yes or no if there are nan
+print("are there na values in data: ", data.isna().values.any())
+
 
 #convert object into integer data ['or'] and ['rpr']
 data['or']=pd.to_numeric(data['or'], errors='coerce')
@@ -108,10 +108,16 @@ train_label, test_label= train_test_split(label_array, test_size=0.2)
 print ("this is the train: ", train_features.head())
 print ("this is the test: ", test_features.head())
 
+
 n_features=train_features.shape[1]
 
 print (n_features)
 print("this is the number of features", n_features)
+
+
+
+
+
 
 #create a sns pairplot of the features
 sns.pairplot(train_features[['class','age_band','dist_m','going','ran','lbs','jockey','trainer','or','rpr']],diag_kind="kde")

@@ -14,8 +14,6 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 
-
-
 # Make NumPy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
 
